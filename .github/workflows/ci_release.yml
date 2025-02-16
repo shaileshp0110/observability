@@ -1,0 +1,68 @@
+name: CI and Release Workflow
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  # CI job: run on every commit to main branch.
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image (CI)
+        # Builds the Docker image to verify that the image can be built successfully.
+        run: docker build -t app:latest app/
+
+  release:  
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run semantic-release
+
+      - name: Refresh package.json from origin
+        run: |
+          git fetch origin main
+          git checkout origin/main -- package.json
+
+      - name: Extract Semantic Version from package.json
+        id: semver
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "SEMVER=$VERSION" >> $GITHUB_ENV
+          echo "Semantic version is $VERSION"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: app/
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/app:${{ env.SEMVER }}
+            ghcr.io/${{ github.repository }}/app:latest
