@@ -4,4 +4,4 @@ node_modules
 tempo-data
 grafana
 logs
-
+release_event.json

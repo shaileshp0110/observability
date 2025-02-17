@@ -5,7 +5,6 @@ on:
     branches: [main]
   release:
     types: [published]
-
 jobs:
   # CI job: run on every commit to main branch.
   ci:
@@ -18,13 +17,15 @@ jobs:
         # Builds the Docker image to verify that the image can be built successfully.
         run: docker build -t app:latest app/
 
-  release:  
-    if: github.event_name == 'release'
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Show Event ************ Name
+        run: | 
+          echo "Event name ****++++++++++++++++******** is: ${{ github.event_name }}"
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -38,6 +39,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run semantic-release
+      - name: Set Git Remote to HTTPS
+        run: git remote set-url origin https://github.com/${{ github.repository }}.git
 
       - name: Refresh package.json from origin
         run: |
