@@ -1,0 +1,10 @@
+{
+    "ref": "refs/heads/main",
+    "event_name": "workflow_dispatch",
+    "repository": {
+        "full_name": "shaileshp0110/observability"
+    },
+    "sender": {
+        "login": "shaileshp0110"
+    }
+}

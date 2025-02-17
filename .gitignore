@@ -5,3 +5,5 @@ tempo-data
 grafana
 logs
 release_event.json
+.idea
+.vscode
